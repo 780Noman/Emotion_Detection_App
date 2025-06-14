@@ -21,12 +21,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-35afd9yiimi^8*w644t6*waq&ca8sa@$+pd1x2(ji!jfu7^)^a'
-
+import os
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# Allows any host, which is safe in Hugging Face's containerized environment
+ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = ['https://huggingface.co']
 
 
 # Application definition
