@@ -1,25 +1,35 @@
 # Use a standard Python image
 FROM python:3.10-slim
 
-# Set environment variables to prevent Python from writing .pyc files
+# Set environment variables for Python
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Set the working directory inside the container
-WORKDIR /code
+# --- PERMISSIONS FIX: Create and switch to a non-root user ---
+# Create a new user named "user" with user ID 1000
+RUN useradd -m -u 1000 user
+# Switch to the "user" so all following commands run as this user
+USER user
+# Set the home directory for the user
+ENV HOME=/home/user
+# Set the working directory inside the user's home
+WORKDIR $HOME/app
+# --- END PERMISSIONS FIX ---
 
-# Copy the requirements file and install dependencies
-COPY requirements.txt /code/
+# Copy and install dependencies
+# Use --chown=user to make sure the "user" owns this file
+COPY --chown=user requirements.txt .
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
-# Copy the rest of your project code into the container
-COPY . /code/
+# Copy the rest of your project code
+# Use --chown=user to make sure the "user" owns all project files
+COPY --chown=user . .
 
-# Run collectstatic to gather all static files
+# Run collectstatic as the "user"
 RUN python manage.py collectstatic --no-input
 
-# Expose the port that Hugging Face expects (7860)
+# Expose the port Hugging Face expects
 EXPOSE 7860
 
-# The command to run your Django application using gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:7860", "--workers", "1", "FER_deploy.wsgi"]
+# Command to run your Django application
+CMD ["gunicorn", "--bind", "0.0.0.0:7860", "FER_deploy.wsgi"]
