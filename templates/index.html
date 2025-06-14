@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>AI Emotion Detector</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #9b59b6; /* New color for camera buttons */
+            --success-color: #2ecc71;
+            --text-color: #2c3e50;
+            --bg-color-start: #f5f7fa;
+            --bg-color-end: #c3cfe2;
+        }
+
+        /* Basic Setup and Body Styling */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--bg-color-start) 0%, var(--bg-color-end) 100%);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Navbar and Footer */
+        .navbar, .footer { text-align: center; padding: 20px 50px; }
+        .navbar {
+            background-color: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .navbar .logo { font-size: 1.6rem; font-weight: 700; }
+        .navbar a { text-decoration: none; color: var(--text-color); font-weight: 600; background-color: rgba(255, 255, 255, 0.3); padding: 8px 15px; border-radius: 20px; transition: all 0.3s; }
+        .navbar a:hover { background-color: var(--primary-color); color: white; }
+        .footer { background-color: rgba(0, 0, 0, 0.1); }
+        .social-links { margin-top: 10px; }
+        .social-links a { color: var(--text-color); font-size: 1.5rem; margin: 0 15px; transition: all 0.3s ease; }
+        .social-links a:hover { color: var(--primary-color); transform: scale(1.2); }
+
+        /* Main Content and Container Card */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 650px; /* Made slightly wider */
+            background: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            text-align: center;
+        }
+        .container h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .container p { color: #555; margin-bottom: 25px; font-size: 1.1rem; }
+        input[type="file"] { display: none; } /* Hide default file input */
+
+        /* NEW: Styling for Camera Elements */
+        #camera-view {
+            width: 100%;
+            max-width: 480px;
+            border-radius: 10px;
+            border: 3px solid #ddd;
+            margin: 20px auto;
+            display: none; /* Hidden by default */
+        }
+        #capture-btn { display: none; } /* Hidden by default */
+        .or-divider {
+            font-weight: 600;
+            color: #777;
+            margin: 20px 0;
+        }
+        
+        /* Button Styles */
+        .button {
+            display: inline-block;
+            padding: 15px 30px;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        .button:hover { transform: translateY(-2px); }
+        .file-upload-label { background-color: var(--primary-color); }
+        .file-upload-label:hover { background-color: #2980b9; box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4); }
+        .camera-btn { background-color: var(--secondary-color); }
+        .camera-btn:hover { background-color: #8e44ad; box-shadow: 0 4px 15px rgba(155, 89, 182, 0.4); }
+        
+        /* Preview and Result */
+        #image-preview-container { margin: 25px auto; min-height: 150px; border: 2px dashed #bdc3c7; border-radius: 10px; padding: 10px; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        #image-preview { max-width: 150px; max-height: 150px; border-radius: 5px; margin-bottom: 10px; }
+        #file-info { font-weight: 600; color: #555; }
+        #result { margin-top: 40px; font-size: 1.5rem; font-weight: bold; background: #ecf0f1; padding: 20px; border-radius: 10px; }
+        #result span { color: #e74c3c; font-size: 2.2rem; display: block; margin-top: 10px; text-transform: uppercase; }
+
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo"><i class="fas fa-brain"></i> Emotion AI</div>
+        <a href="https://www.linkedin.com/in/noman-amjad-b9a3a5248" target="_blank">Developer Profile</a>
+    </nav>
+
+    <div class="main-content">
+        <div class="container">
+            <h1>Emotion Detection AI</h1>
+            <p>Upload an image or use your camera to get a live prediction.</p>
+            
+            <video id="camera-view" autoplay playsinline></video>
+            <canvas id="photo-canvas" style="display: none;"></canvas>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="file" name="image_file" id="image_file_input" accept="image/*" required>
+
+                <div>
+                    <label for="image_file_input" class="button file-upload-label"><i class="fas fa-cloud-upload-alt"></i> Choose File</label>
+                </div>
+                <div class="or-divider">OR</div>
+                <div>
+                    <button type="button" id="start-camera-btn" class="button camera-btn"><i class="fas fa-camera"></i> Start Camera</button>
+                    <button type="button" id="capture-btn" class="button camera-btn"><i class="fas fa-camera-retro"></i> Capture Photo</button>
+                </div>
+
+                <div id="image-preview-container">
+                    <img id="image-preview" src="#" alt="Image Preview"/>
+                    <div id="file-info"></div>
+                </div>
+                
+                <button type="submit" class="button" style="background-color: var(--success-color); font-size: 1.2rem; width: 100%; margin-top: 20px;">
+                    <i class="fas fa-cogs"></i> Detect Emotion
+                </button>
+            </form>
+    
+            {% if prediction %}
+                <div id="result">Predicted Emotion<span>{{ prediction }}</span></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div>&copy; 2025 - Developed by Noman Amjad</div>
+        <div class="social-links">
+            <a href="https://www.linkedin.com/in/noman-amjad-b9a3a5248" target="_blank" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
+            <a href="https://github.com/780Noman" target="_blank" title="GitHub"><i class="fab fa-github"></i></a>
+        </div>
+    </footer>
+
+    <script>
+        const fileInput = document.getElementById('image_file_input');
+        const previewContainer = document.getElementById('image-preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const fileInfo = document.getElementById('file-info');
+        
+        const startCameraBtn = document.getElementById('start-camera-btn');
+        const captureBtn = document.getElementById('capture-btn');
+        const video = document.getElementById('camera-view');
+        const canvas = document.getElementById('photo-canvas');
+
+        // --- Event Listener for File Upload ---
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.setAttribute('src', e.target.result);
+                }
+                reader.readAsDataURL(file);
+                fileInfo.textContent = `File: ${file.name}`;
+                previewContainer.style.display = 'flex';
+                stopCamera(); // Stop camera if it was running
+            }
+        });
+
+        // --- Event Listeners for Camera ---
+        startCameraBtn.addEventListener('click', async function() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                video.style.display = 'block';
+                startCameraBtn.style.display = 'none';
+                captureBtn.style.display = 'inline-block';
+                previewContainer.style.display = 'none'; // Hide file preview
+            } catch (err) {
+                console.error("Error accessing camera: ", err);
+                alert("Could not access the camera. Please ensure you have a camera and have granted permission.");
+            }
+        });
+        
+        captureBtn.addEventListener('click', function() {
+            // Set canvas dimensions to match the video feed
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            // Draw the current video frame onto the canvas
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Convert the canvas image to a Blob
+            canvas.toBlob(function(blob) {
+                // Create a new File object from the Blob
+                const capturedFile = new File([blob], "webcam_capture.jpg", { type: "image/jpeg" });
+
+                // Use the DataTransfer API to create a FileList
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(capturedFile);
+                
+                // Assign this new FileList to our hidden file input
+                // This makes the form treat the captured photo like a real uploaded file
+                fileInput.files = dataTransfer.files;
+
+                // Trigger the 'change' event on the file input to show the preview
+                fileInput.dispatchEvent(new Event('change'));
+
+            }, 'image/jpeg');
+
+            stopCamera();
+        });
+
+        function stopCamera() {
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            video.style.display = 'none';
+            startCameraBtn.style.display = 'inline-block';
+            captureBtn.style.display = 'none';
+        }
+    </script>
+
+</body>
+</html>
