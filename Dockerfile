@@ -1,32 +1,36 @@
 # Use the Python version that matches your local machine
 FROM python:3.12-slim
 
+# --- THIS IS THE FIX ---
+# Install the system dependency required by opencv-python (cv2)
+# This must be done before switching to the non-root user
+RUN apt-get update && apt-get install -y libgl1-mesa-glx
+# --------------------
+
 # Set environment variables for Python
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Create a non-root user for security
+# Create and switch to a non-root user for better security
 RUN useradd -m -u 1000 user
 USER user
 
-# Set the working directory AND add the user's bin to the PATH
+# Set the working directory and add the user's bin to the PATH
 WORKDIR /home/user/app
-# --- THIS IS THE FIX ---
 ENV PATH="/home/user/.local/bin:${PATH}"
-# --------------------
 
-# Copy and install dependencies
+# Copy and install Python dependencies
 COPY --chown=user requirements.txt .
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 # Copy all your project files
 COPY --chown=user . .
 
-# Run collectstatic
+# Run the 'collectstatic' command required by Django
 RUN python manage.py collectstatic --no-input
 
 # Expose the correct port
 EXPOSE 7860
 
-# Command to run the application
+# Command to start your Django application
 CMD ["gunicorn", "--bind", "0.0.0.0:7860", "FER_deploy.wsgi"]
