@@ -1,17 +1,11 @@
 # Use the Python version that matches your local machine
 FROM python:3.12-slim
 
-# --- THIS IS THE FIX ---
-# Install the system dependency required by opencv-python (cv2)
-# This must be done before switching to the non-root user
-RUN apt-get update && apt-get install -y libgl1-mesa-glx
-# --------------------
-
 # Set environment variables for Python
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Create and switch to a non-root user for better security
+# Create and switch to a non-root user for security
 RUN useradd -m -u 1000 user
 USER user
 
@@ -19,7 +13,7 @@ USER user
 WORKDIR /home/user/app
 ENV PATH="/home/user/.local/bin:${PATH}"
 
-# Copy and install Python dependencies
+# Copy and install Python dependencies from the corrected requirements file
 COPY --chown=user requirements.txt .
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
