@@ -27,8 +27,17 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 DEBUG = True
 
 # Allows any host, which is safe in Hugging Face's containerized environment
-ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['https://huggingface.co']
+# ALLOWED_HOSTS tells Django what domain names it is allowed to serve.
+ALLOWED_HOSTS = [
+    'nomi78600-emotion-detector.hf.space',
+    'localhost',
+    '127.0.0.1',
+]
+
+# CSRF_TRUSTED_ORIGINS tells Django which websites are allowed to send POST requests (like file uploads).
+CSRF_TRUSTED_ORIGINS = [
+    'https://nomi78600-emotion-detector.hf.space',
+]
 
 
 # Application definition
