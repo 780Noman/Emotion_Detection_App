@@ -1,31 +1,32 @@
 # Use the Python version that matches your local machine
 FROM python:3.12-slim
 
-# Set environment variables to make Python run smoothly in Docker
+# Set environment variables for Python
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Create a non-root user for better security (Hugging Face recommendation)
+# Create a non-root user for security
 RUN useradd -m -u 1000 user
 USER user
 
-# Set the working directory inside the user's home folder
+# Set the working directory AND add the user's bin to the PATH
 WORKDIR /home/user/app
+# --- THIS IS THE FIX ---
+ENV PATH="/home/user/.local/bin:${PATH}"
+# --------------------
 
 # Copy and install dependencies
-# The --chown flag ensures the 'user' has permission to use this file
 COPY --chown=user requirements.txt .
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
-# Copy all your project files into the working directory
-# The --chown flag gives the 'user' ownership of all your code
+# Copy all your project files
 COPY --chown=user . .
 
-# Run the 'collectstatic' command required by Django
+# Run collectstatic
 RUN python manage.py collectstatic --no-input
 
-# Tell Hugging Face that your app will be running on port 7860
+# Expose the correct port
 EXPOSE 7860
 
-# The command to start your Django application using the Gunicorn server
+# Command to run the application
 CMD ["gunicorn", "--bind", "0.0.0.0:7860", "FER_deploy.wsgi"]
